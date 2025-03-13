@@ -5,7 +5,10 @@ import axios from "axios";
 import "./../styles/Chatbox.css";
 
 const Chatbox = () => {
-    const [messages, setMessages] = useState([]);
+    const [messages, setMessages] = useState(() => {
+        const savedMessages = localStorage.getItem("chatMessages");
+        return savedMessages ? JSON.parse(savedMessages) : [];
+    });
     const [input, setInput] = useState("");
     const [isListening, setIsListening] = useState(false);
     const recognitionRef = useRef(null);
@@ -20,7 +23,9 @@ const Chatbox = () => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
+        localStorage.setItem("chatMessages", JSON.stringify(messages));
     }, [messages]);
+
     const backendUrl = import.meta.env.VITE_BACKEND_CHAT_URL;
 
     const sendMessage = async () => {
@@ -29,7 +34,6 @@ const Chatbox = () => {
         const userMessage = { sender: "user", text: input };
         setMessages((prev) => [...prev, userMessage]);
         setInput("");
-        
 
         try {
             const token = localStorage.getItem("token");
@@ -39,13 +43,27 @@ const Chatbox = () => {
                 return;
             }
 
-            const response = await axios.post(`http://localhost:8000/api/v1/chat`, {
-                message: input,
-            }, {
+            const userQuery = { user_query: input };
+            console.log("Sending to API:", JSON.stringify(userQuery));
+
+            const response = await axios.post(`https://llm-design-1.onrender.com/process-query`, userQuery, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+             //response from ai agent
+            console.log("Response from API:", response.data);
 
-            const botMessage = { sender: "agent", text: response.data.reply };
+            let botMessage;
+
+            if (response.data.data) {
+                
+
+                // If `data` exists, extract message from `data`
+                botMessage = { sender: "agent", text: response.data.message };
+            } else {
+                // Otherwise, parse the `message` field as JSON
+                const parsedMessage = JSON.parse(response.data.message);
+                botMessage = { sender: "agent", text: parsedMessage.message };
+            }
             setMessages((prev) => [...prev, botMessage]);
         } catch (error) {
             console.error("Error sending message:", error);
@@ -107,6 +125,7 @@ const Chatbox = () => {
 
     const handleLogout = () => {
         localStorage.removeItem("token");
+        localStorage.removeItem("chatMessages");
         navigate("/");
     };
 
