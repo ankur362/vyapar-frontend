@@ -1,5 +1,5 @@
 import axios from "axios"; // ✅ Import Axios
-import { ArrowRight, DollarSignIcon, Mail, Mic, MicOff, Phone, Send } from "lucide-react";
+import { ArrowRight, DollarSignIcon, Download, Mail, Mic, MicOff, Phone, Plus, Send } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./../styles/Chatbox.css";
@@ -11,6 +11,7 @@ const Chatbox = () => {
     });
     const [input, setInput] = useState("");
     const [isListening, setIsListening] = useState(false);
+    const [selectedProducts, setSelectedProducts] = useState([]);
     const recognitionRef = useRef(null);
     const messagesEndRef = useRef(null);
     const navigate = useNavigate();
@@ -60,57 +61,7 @@ const Chatbox = () => {
             );
 
             console.log("Response from API:", response.data);
-
-            let botMessage;
-            if (response.data.data) {
-                botMessage = { sender: "agent", text: response.data.message };
-
-                // Handle customer details when show is true
-                if (response.data.data.show) {
-                    console.log(response.data.data.customers);
-
-                    botMessage.customerDetails = response.data.data.customers.map(({ email, name, phone, outstandingBill, _id,
-                        TotalBill }) => ({
-                            email,
-                            name,
-                            phone,
-                            outstandingBill,
-                            TotalBill,
-                            _id
-                        }));
-                }
-                // Handle flow=true scenario with customer array
-                else if (response.data.data.flow === true && response.data.data.customers) {
-                    console.log("Flow is true, processing customers:", response.data.data.customers);
-
-                    botMessage.flowCustomers = response.data.data.customers.map(({ customer }) => ({
-                        name: customer.name,
-                        totalBill: customer.totalBill,
-                        outstandingBill: customer.outstandingBill
-                    }));
-                }
-                // Handle product details when show is false
-                else if (response.data.data.show === false && response.data.data.product) {
-                    console.log(response.data.data.product);
-
-                    botMessage.productDetails = response.data.data.product.map(({ name, rate, gstRate }) => ({
-                        name,
-                        rate,
-                        gstRate
-                    }));
-                }
-            } else {
-                // Fix: Check if response.data.message is a JSON string before parsing
-                try {
-                    const parsedMessage = JSON.parse(response.data.message);
-                    botMessage = { sender: "agent", text: parsedMessage.message };
-                } catch (parseError) {
-                    // If parsing fails, use the message as plain text
-                    botMessage = { sender: "agent", text: response.data.message || "No response from server" };
-                }
-            }
-
-            setMessages((prev) => [...prev, botMessage]);
+            processResponse(response.data);
         } catch (error) {
             console.error("Error sending message:", error);
             // Show the error in the chat interface instead of just the console
@@ -121,8 +72,91 @@ const Chatbox = () => {
         }
     };
 
+    // Process API response based on step parameter
+    const processResponse = (data) => {
+        console.log("safds", data);
+        
+        let botMessage = { sender: "agent", text: data.message.message || data.message };
+    
+        // Handle step completed with invoice in sale_result
+        if ( data.sale_result) {
+            if (data.sale_result.data && data.sale_result.data.invoiceUrl) {
+                botMessage.invoiceUrl = data.sale_result.data.invoiceUrl;
+                
+                // If there are sale details, include them
+                if (data.sale_result.data.newSale) {
+                    botMessage.saleDetails = data.sale_result.data.newSale;
+                }
+            }
+        }
+        // Handle original invoice URL paths
+        else if (data.data && data.data.invoiceUrl) {
+            botMessage.invoiceUrl = data.data.invoiceUrl;
+        } else if (data.invoiceUrl) {
+            botMessage.invoiceUrl = data.invoiceUrl;
+        }
+    
+        // Handle customer selection step
+        if ( data.customers) {
+            botMessage.customers = data.customers.map(customer => ({
+                _id: customer._id,
+                name: customer.name,
+                email: customer.email,
+                phone: customer.phone,
+                outstandingBill: customer.outstandingBill,
+                TotalBill: customer.TotalBill
+            }));
+            botMessage.step = "waiting_for_customer";
+        } 
+        // Handle product selection step
+        else if (data.step === "waiting_for_products" && data.products) {
+            botMessage.products = data.products.map(product => ({
+                _id: product._id,
+                name: product.name,
+                rate: product.rate,
+                gstRate: product.gstRate
+            }));
+            botMessage.step = "waiting_for_products";
+            // Reset selected products when new product selection starts
+            setSelectedProducts([]);
+        }
+        // Handle sale created success with invoice in original format
+        else if (data.statusCode === 201 && data.data && data.data.invoiceUrl) {
+            botMessage.invoiceUrl = data.data.invoiceUrl;
+            botMessage.saleDetails = data.data.newSale;
+        }
+        // Handle other data structures from original code
+        else if (data.data) {
+            if (data.data.show) {
+                botMessage.customerDetails = data.data.customers.map(({ email, name, phone, outstandingBill, _id, TotalBill }) => ({
+                    email,
+                    name,
+                    phone,
+                    outstandingBill,
+                    TotalBill,
+                    _id
+                }));
+            } else if (data.data.flow === true && data.data.customers) {
+                botMessage.flowCustomers = data.data.customers.map(({ customer }) => ({
+                    name: customer.name,
+                    totalBill: customer.totalBill,
+                    outstandingBill: customer.outstandingBill
+                }));
+            } else if (data.data.show === false && data.data.product) {
+                botMessage.productDetails = data.data.product.map(({ _id,name, rate, gstRate }) => ({
+                    name,
+                    rate,
+                    gstRate,
+                    _id
+                }));
+            }
+        }
+    
+        setMessages((prev) => [...prev, botMessage]);
+    };
+
     const handleCustomerClick = async (customer) => {
-        console.log("Selected customer data being sent by clicking:", customer);
+        console.log("Selected customer:", customer);
         try {
             const token = localStorage.getItem("token");
             if (!token) {
@@ -131,15 +165,18 @@ const Chatbox = () => {
                 return;
             }
 
+            // Only send the customer ID as requested
             const userQuery = {
-                user_query: `Customer detail with name ${customer.name}`
+                user_query: `${customer._id}`
             };
 
-            // Add optional fields if they exist
-
-            if (customer._id) userQuery.user_query += `, id ${customer._id}`;
-
-            console.log("Sending customer query to API:", JSON.stringify(userQuery));
+            console.log("Sending customer ID to API:", JSON.stringify(userQuery));
+            
+            // Show selection in chat
+            setMessages((prev) => [...prev, {
+                sender: "user",
+                text: `Selected customer: ${customer.name}`
+            }]);
 
             const response = await axios.post(
                 `${backendUrl}`,
@@ -152,14 +189,68 @@ const Chatbox = () => {
                 }
             );
 
-            console.log("Customer details sent:", response.data);
+            console.log("Response after customer selection:", response.data);
+            processResponse(response.data);
         } catch (error) {
-            console.error("Error sending customer details:", error);
+            console.error("Error sending customer ID:", error);
+            setMessages((prev) => [...prev, {
+                sender: "agent",
+                text: "Sorry, there was an error processing your customer selection. Please try again."
+            }]);
         }
     };
 
     const handleProductClick = async (product) => {
-        console.log("Selected product data being sent by clicking:", product);
+        // Add product to selected products list with default quantity of 1
+        const newProduct = {
+            productId: product._id,
+            name: product.name,
+            quantity: 1,
+            rate: product.rate,
+            gstApplied: product.gstRate
+        };
+        
+        setSelectedProducts(prev => [...prev, newProduct]);
+        
+        console.log("Added product to selection:", newProduct);
+        
+        // Show selection in chat
+        setMessages((prev) => [...prev, {
+            sender: "user",
+            text: `Added product: ${product.name}`
+        }]);
+    };
+
+    const updateProductQuantity = (index, value) => {
+        const updatedProducts = [...selectedProducts];
+        updatedProducts[index].quantity = parseInt(value) || 1;
+        setSelectedProducts(updatedProducts);
+    };
+
+    const updateProductRate = (index, value) => {
+        const updatedProducts = [...selectedProducts];
+        updatedProducts[index].rate = parseFloat(value) || 0;
+        setSelectedProducts(updatedProducts);
+    };
+
+    const updateProductGst = (index, value) => {
+        const updatedProducts = [...selectedProducts];
+        updatedProducts[index].gstApplied = parseFloat(value) || 0;
+        setSelectedProducts(updatedProducts);
+    };
+
+    const removeProduct = (index) => {
+        const updatedProducts = [...selectedProducts];
+        updatedProducts.splice(index, 1);
+        setSelectedProducts(updatedProducts);
+    };
+
+    const submitProducts = async () => {
+        if (selectedProducts.length === 0) {
+            alert("Please select at least one product");
+            return;
+        }
+
         try {
             const token = localStorage.getItem("token");
             if (!token) {
@@ -168,10 +259,25 @@ const Chatbox = () => {
                 return;
             }
 
+            // Format products for submission - remove name as it's not in the expected format
+            const formattedProducts = selectedProducts.map(({ productId, quantity, rate, gstApplied }) => ({
+                productId,
+                quantity,
+                rate,
+                gstApplied
+            }));
+
             const userQuery = {
-                user_query: `Product detail with name ${product.name}, rate ${product.rate}, GST rate ${product.gstRate}`
+                user_query: JSON.stringify(formattedProducts)
             };
-            console.log("Sending product query to API:", JSON.stringify(userQuery));
+
+            console.log("Submitting products:", JSON.stringify(userQuery));
+            
+            // Show selection in chat
+            setMessages((prev) => [...prev, {
+                sender: "user",
+                text: `Submitting ${selectedProducts.length} products`
+            }]);
 
             const response = await axios.post(
                 `${backendUrl}`,
@@ -184,10 +290,76 @@ const Chatbox = () => {
                 }
             );
 
-            console.log("Product details sent:", response.data);
+            console.log("Response after product submission:", response.data);
+            processResponse(response.data);
+            
+            // Clear selected products after submission
+            setSelectedProducts([]);
         } catch (error) {
-            console.error("Error sending product details:", error);
+            console.error("Error submitting products:", error);
+            setMessages((prev) => [...prev, {
+                sender: "agent",
+                text: "Sorry, there was an error submitting your product selection. Please try again."
+            }]);
         }
+    };
+
+    const handleInvoiceDownload = (invoiceUrl) => {
+        // Create a hidden anchor element to trigger the download
+        const link = document.createElement('a');
+        link.href = invoiceUrl;
+        link.target = '_blank';
+        link.download = 'invoice.pdf'; // Suggest a filename
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+    const handleProductSelection = async (product) => {
+        console.log("Selected ", product);
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                alert("Unauthorized! Please log in.");
+                navigate("/");
+                return;
+            }
+    
+            const userQuery = {
+                user_query: `${product._id}`
+            };
+    
+            console.log("Sending product ID to API:", JSON.stringify(userQuery));
+    
+            // Show selection in chat
+            setMessages((prev) => [...prev, {
+                sender: "user",
+                text: `Selected product: ${product.name}`
+            }]);
+    
+            const response = await axios.post(
+                `${backendUrl}`,
+                userQuery,
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+    
+            console.log("Response after product selection:", response.data);
+            processResponse(response.data);
+        } catch (error) {
+            console.error("Error sending product ID:", error);
+            setMessages((prev) => [...prev, {
+                sender: "agent",
+                text: "Sorry, there was an error processing your product selection. Please try again."
+            }]);
+        }
+    };
+
+    const handleInvoiceView = (invoiceUrl) => {
+        window.open(invoiceUrl, '_blank');
     };
 
     const handleKeyPress = (event) => {
@@ -274,7 +446,7 @@ const Chatbox = () => {
 
             <div className="chatbox">
                 <div className="chat-header">
-                    <h2><img src="../vaypar.png" /> </h2>
+                    <h2>BizEase</h2>
                 </div>
 
                 <div className="chat-messages">
@@ -282,7 +454,6 @@ const Chatbox = () => {
                         <div
                             key={index}
                             className={`message ${msg.sender === "user" ? "user" : "agent"}`}
-                            style={{ cursor: (msg.customerDetails || msg.productDetails || msg.flowCustomers) ? "pointer" : "default" }}
                         >
                             {msg.text ? (
                                 msg.text.split("\n").map((line, i) => (
@@ -295,21 +466,134 @@ const Chatbox = () => {
                                 <span>Message unavailable</span>
                             )}
 
-                            {msg.customerDetails && (
-                                <div className="customer-details">
-                                    {msg.customerDetails.map((customer, i) => (
+                            {/* Invoice URL Handler */}
+                            {msg.invoiceUrl && (
+                                <div className="invoice-container">
+                                    <h4>Invoice Generated</h4>
+                                    <div className="invoice-actions">
+                                        <button 
+                                            onClick={() => handleInvoiceView(msg.invoiceUrl)} 
+                                            className="invoice-btn view-btn"
+                                        >
+                                            View Invoice
+                                        </button>
+                                        <button 
+                                            onClick={() => handleInvoiceDownload(msg.invoiceUrl)} 
+                                            className="invoice-btn download-btn"
+                                        >
+                                            <Download size={16} /> Download PDF
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Sale Details when available */}
+                            {msg.saleDetails && (
+                                <div className="sale-details">
+                                    <h4>Sale Completed</h4>
+                                    <p><strong>Total Amount:</strong> ₹{msg.saleDetails.totalCost}</p>
+                                    <p><strong>Amount Paid:</strong> ₹{msg.saleDetails.paymentDetails.amountPaid}</p>
+                                    <p><strong>Remaining:</strong> ₹{msg.saleDetails.paymentDetails.remainingAmount}</p>
+                                    <p><strong>Payment Method:</strong> {msg.saleDetails.paymentMethod}</p>
+                                </div>
+                            )}
+
+                            {/* Handle waiting_for_customer step */}
+                            {msg.step === "waiting_for_customer" && msg.customers && (
+                                <div className="customer-options">
+                                    <h4>Select a customer:</h4>
+                                    {msg.customers.map((customer, i) => (
                                         <div className="clickable-option" key={i} onClick={() => handleCustomerClick(customer)}>
                                             <p className="info"><strong><ArrowRight size={14} color="white" /></strong> {customer.name}</p>
-                                            <p className="info"><strong><Mail size={14} color="white" /></strong>{customer.email}</p>
-                                            <p className="info"><strong><Phone size={14} color="white" /></strong>{customer.phone}</p>
-                                            <p className="info"><strong><DollarSignIcon size={14} color="white" /></strong>{customer.outstandingBill}</p>
-                                            <p className="info"><strong><DollarSignIcon size={14} color="white" /></strong>{customer.TotalBill}</p>
-                                            <p className="info"><strong><Phone size={14} color="white" /></strong>{customer._id}</p>
+                                            <p className="info"><strong><Mail size={14} color="white" /></strong> {customer.email}</p>
+                                            <p className="info"><strong><Phone size={14} color="white" /></strong> {customer.phone}</p>
+                                            <p className="info"><strong><DollarSignIcon size={14} color="white" /></strong> Outstanding: {customer.outstandingBill}</p>
+                                           
                                         </div>
                                     ))}
                                 </div>
                             )}
 
+                            {/* Handle waiting_for_products step */}
+                            {msg.step === "waiting_for_products" && msg.products && (
+                                <div className="product-options">
+                                    <h4>Select products:</h4>
+                                    <div className="product-list">
+                                        {msg.products.map((product, i) => (
+                                            <div className="clickable-option" key={i} onClick={() => handleProductClick(product)}>
+                                                <p className="info"><strong><Plus size={14} color="white" /></strong> {product.name}</p>
+                                                <p className="info"><strong>Rate:</strong> {product.rate}</p>
+                                                <p className="info"><strong>GST Rate:</strong> {product.gstRate}%</p>
+                                                
+                                            </div>
+                                        ))}
+                                    </div>
+                                    
+                                    {selectedProducts.length > 0 && (
+                                        <div className="selected-products">
+                                            <h4>Selected Products:</h4>
+                                            {selectedProducts.map((product, index) => (
+                                                <div key={index} className="selected-product">
+                                                    <div className="product-header">
+                                                        <span>{product.name}</span>
+                                                        <button onClick={() => removeProduct(index)} className="remove-button">×</button>
+                                                    </div>
+                                                    <div className="product-fields">
+                                                        <label>
+                                                            Quantity:
+                                                            <input 
+                                                                type="number" 
+                                                                value={product.quantity} 
+                                                                onChange={(e) => updateProductQuantity(index, e.target.value)}
+                                                                
+                                                            />
+                                                        </label>
+                                                        <label>
+                                                            Rate:
+                                                            <input 
+                                                                type="number" 
+                                                                value={product.rate} 
+                                                                onChange={(e) => updateProductRate(index, e.target.value)}
+                                                                
+                                                            />
+                                                        </label>
+                                                        <label>
+                                                            GST %:
+                                                            <input 
+                                                                type="number" 
+                                                                value={product.gstApplied} 
+                                                                onChange={(e) => updateProductGst(index, e.target.value)}
+                                                                
+                                                            />
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            <button onClick={submitProducts} className="submit-products">
+                                                Submit Products
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Original customer details display */}
+                            {msg.customerDetails && (
+                                <div className="customer-details">
+                                    {msg.customerDetails.map((customer, i) => (
+                                        <div className="clickable-option" key={i} onClick={() => handleCustomerClick(customer)}>
+                                            <p className="info"><strong><ArrowRight size={14} color="white" /></strong> {customer.name}</p>
+                                            <p className="info"><strong><Mail size={14} color="white" /></strong> {customer.email}</p>
+                                            <p className="info"><strong><Phone size={14} color="white" /></strong> {customer.phone}</p>
+                                            <p className="info"><strong><DollarSignIcon size={14} color="white" /></strong> {customer.outstandingBill}</p>
+                                            <p className="info"><strong><DollarSignIcon size={14} color="white" /></strong> {customer.TotalBill}</p>
+                                            
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Flow customers display */}
                             {msg.flowCustomers && (
                                 <div className="customer-details">
                                     {msg.flowCustomers.map((customer, i) => (
@@ -322,10 +606,13 @@ const Chatbox = () => {
                                 </div>
                             )}
 
+                            {/* Original product details display */}
                             {msg.productDetails && (
                                 <div className="product-details">
+                                    console.log(product);
+                                    
                                     {msg.productDetails.map((product, i) => (
-                                        <div className="clickable-option" key={i} onClick={() => handleProductClick(product)}>
+                                        <div className="clickable-option" key={i} onClick={() => handleProductSelection(product)}>
                                             <p className="info"><strong><ArrowRight size={14} color="white" /></strong> {product.name}</p>
                                             <p className="info"><strong>Rate:</strong> {product.rate}</p>
                                             <p className="info"><strong>GST Rate:</strong> {product.gstRate}%</p>
