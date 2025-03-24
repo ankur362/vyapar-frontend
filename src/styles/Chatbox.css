@@ -11,25 +11,17 @@
     align-items: center;
     height: 100vh;
     width: 100%;
-    background:linear-gradient(90deg,#dd3755 0%, #a9132a 100%);
-    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(90deg, #2a2a3f 0%, #3c3c4e 100%);
     padding: 15px;
     opacity: 0;
     animation: fadeIn 2s ease-in-out forwards;
     position: relative;
-    
 }
 
-
-/* Fade-in animation for background */
 @keyframes fadeIn {
     0% { opacity: 0; }
     100% { opacity: 1; }
 }
-
-
-
-
 
 .logout-button {
     position: absolute;
@@ -37,7 +29,7 @@
     right: 20px;
     width: 85px;
     padding: 10px 18px;
-    background-color: #ff4d4d;
+    background-color: #b95555;
     color: white;
     border: none;
     border-radius: 5px;
@@ -47,10 +39,9 @@
     transition: background 0.3s ease;
 }
 
-
 .logout-button:hover {
-    background-color: #f70909;
-    color: #fcc6c6;
+    background-color: #a03f3f;
+    color: #fbeaea;
 }
 
 .chatbox {
@@ -59,36 +50,32 @@
     height: 650px;
     display: flex;
     flex-direction: column;
-    background: #ffffff;
+    background: #3a3a4b;
     border-radius: 15px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     overflow: hidden;
     position: relative;
-    border: none;
 }
 
 .chat-header {
-    background: #ED1A3B;
-    color: white;
-    margin: 0;
+    background: #4a4a6a;
+    color: #f8f8f8;
     padding: 2px 0;
-    border-top-right-radius: 10px;
-    border-top-left-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    text-align: center;
     font-size: 18px;
     font-weight: 600;
     letter-spacing: 1px;
+    height: 80px;
 }
-
 
 .chat-header img {
     width: 85px;
     margin-right: 5px;
     vertical-align: middle;
 }
+
 .chat-messages {
     flex: 1;
     overflow-y: auto;
@@ -97,9 +84,8 @@
     flex-direction: column;
     gap: 12px;
     scrollbar-width: thin;
-    scrollbar-color: #dd3755 transparent;
-    background-color: #2f4f4f ;
-   
+    scrollbar-color: #888 transparent;
+    background-color: #2f2f40;
     font-size: 14px;
     font-weight: 400;
 }
@@ -109,10 +95,12 @@
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-    background-color: #c2185b;
+    background-color: #888;
     border-radius: 3px;
-}.clickable-option {
-    background: linear-gradient(135deg, #d5193a 0%, #a9132a 100%);
+}
+
+.clickable-option {
+    background: linear-gradient(135deg, #6a6aa0 0%, #4b4b6f 100%);
     color: white;
     padding: 10px;
     margin: 8px 0;
@@ -127,27 +115,23 @@
 
 .clickable-option:hover {
     transform: scale(1.05);
-    background: linear-gradient(-135deg, #d5193a 0%, #a9132a 100%);
+    background: linear-gradient(-135deg, #6a6aa0 0%, #4b4b6f 100%);
 }
 
 .info {
-    
     gap: 8px;
     font-size: 14px;
-    font-weight:500;
+    font-weight: 500;
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
-    vertical-align: middle;
     padding-top: 2px;
-   
 }
 
 .icon {
     display: flex;
     align-items: center;
-    
 }
 
 .message {
@@ -163,22 +147,17 @@
     animation: fadeIn 0.3s ease-in-out;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
 .message.user {
     align-self: flex-end;
-    background: linear-gradient(135deg, #d5193a 0%, #a9132a 100%);
+    background: linear-gradient(135deg, #6a6aa0 0%, #4b4b6f 100%);
     color: white;
     border-bottom-right-radius: 5px;
 }
 
 .message.agent {
     align-self: flex-start;
-    background: #e9ecef;
-    color: #333;
+    background: #505070;
+    color: #f0f0f0;
     border-bottom-left-radius: 5px;
 }
 
@@ -186,25 +165,25 @@
     display: flex;
     align-items: center;
     padding: 12px;
-    background: white;
-    border-top: 2px solid #ddd;
+    background: #2f2f40;
+    border-top: 2px solid #444;
     gap: 10px;
 }
 
 .chat-input input {
     flex: 1;
     padding: 12px 15px;
-    border: 2px solid #ccc;
+    border: 2px solid #666;
     border-radius: 20px;
     font-size: 15px;
+    background: #383852;
+    color: #f0f0f0;
     outline: none;
-    min-width: 0;
-    font-family: 'Poppins', sans-serif;
     transition: border-color 0.3s ease;
 }
 
 .chat-input input:focus {
-    border-color: #a9132a;
+    border-color: #88BDF2;
 }
 
 .button-container {
@@ -222,36 +201,32 @@
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
-    flex-shrink: 0;
+    color: white;
 }
 
 .send-button {
-    background: linear-gradient(135deg, #d5193a 0%, #a9132a 100%);
-    color: white;
+    background: linear-gradient(135deg, #6a6aa0, #4b4b6f);
 }
 
 .mic-button {
-    background: linear-gradient(135deg, #4caf50, #087f23);
-    color: white;
+    background: linear-gradient(135deg, #599c6a, #3d7050);
 }
 
 .send-button:hover {
-    background: linear-gradient(135deg, #d5193a 0%, #a9132a 100%);
     transform: scale(1.05);
 }
 
 .mic-button:hover {
-    background: linear-gradient(135deg, #087f23, #045d15);
+    background: linear-gradient(135deg, #3d7050, #2a5138);
     transform: scale(1.05);
 }
-
 
 /* Responsive styles */
 @media (max-width: 768px) {
     .chatbox {
         height: 90vh;
     }
-    
+
     .logout-button {
         top: 15px;
         right: 15px;
@@ -259,12 +234,12 @@
         padding: 8px 12px;
         font-size: 12px;
     }
-    
+
     .chat-header {
         padding: 15px 0;
         font-size: 16px;
     }
-    
+
     .message {
         max-width: 85%;
         font-size: 14px;
@@ -275,28 +250,206 @@
     .chat-container {
         padding: 10px;
     }
-    
+
     .chatbox {
         border-radius: 10px;
     }
-    
+
     .message {
         max-width: 90%;
         padding: 10px 12px;
         font-size: 13px;
     }
-    
+
     .chat-input {
         padding: 8px;
     }
-    
+
     .chat-input input {
         padding: 10px;
         font-size: 14px;
     }
-    
+
     .send-button, .mic-button {
         width: 36px;
         height: 36px;
     }
+}
+
+/* Floating Product Panel */
+.floating-product-panel {
+    background-color: #2d3c4d;
+}
+
+.panel-header {
+    background-color: #2a3544;
+    border-bottom: 1px solid #44566c;
+}
+
+.panel-header h3,
+.close-button {
+    color: #f0f0f0;
+}
+
+.panel-content {
+    padding: 15px;
+    overflow-y: auto;
+    max-height: calc(80vh - 50px);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.available-products, .selected-products {
+    background-color: #3c5062;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.available-products h4, .selected-products h4 {
+    color: #ecf0f1;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.clickable-product {
+    background-color: #7ba3c3;
+    border-radius: 6px;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: white;
+}
+
+.clickable-product:hover {
+    background-color: #6a8fa7;
+    transform: translateY(-2px);
+}
+
+.selected-product {
+    background-color: #6a89a7;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.product-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    color: white;
+    font-weight: bold;
+}
+
+.remove-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 18px;
+    width: 35px;
+    cursor: pointer;
+}
+
+.product-fields {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.product-fields label {
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+    color: white;
+}
+
+.product-fields input {
+    background-color: #3c4c5e;
+    border: 1px solid #2e3a4b;
+    border-radius: 4px;
+    padding: 5px;
+    color: white;
+}
+
+.no-products {
+    color: #bdc3c7;
+    font-style: italic;
+}
+
+.submit-products {
+    background-color: #6a89a7;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 15px;
+    margin-top: 15px;
+    cursor: pointer;
+    font-weight: bold;
+    width: 100%;
+    transition: background-color 0.2s ease;
+}
+
+.submit-products:hover {
+    background-color: #4d6c89;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    color: black;
+}
+
+.invoice-container {
+    background-color: rgba(255, 255, 255, 0.07);
+    border-left: 3px solid #6a89a7;
+}
+
+.invoice-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.invoice-btn {
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+}
+
+.view-btn {
+    background-color: #7ba3c3;
+    color: white;
+}
+
+.download-btn {
+    background-color: #6a89a7;
+    color: white;
+}
+
+.download-btn:hover {
+    background-color: #4d6c89;
+}
+
+.sale-details {
+    background-color: rgba(255, 255, 255, 0.07);
+    border-left: 3px solid #88BDF2;
+}
+
+.sale-details h4 {
+    color: #88BDF2;
+}
+
+.sale-details p {
+    margin: 6px 0;
 }

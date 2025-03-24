@@ -1,39 +1,112 @@
-.login-container {
-    width: 300px;
-    margin: 100px auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    text-align: center;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
 }
 
+/* Container for the login form */
+.login-container {
+    width: 350px;
+    margin: 80px auto;
+    padding: 25px;
+    background-color: #3c5062; /* Matching background */
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+    border: 1px solid #44566c;
+}
+
+/* Heading for login page */
 .login-container h2 {
     margin-bottom: 20px;
+    color: #ecf0f1; /* Light text */
+    font-size: 22px;
 }
 
+/* Input fields for email and password */
 input {
     width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    padding: 12px;
+    margin: 12px 0;
+    border: 1px solid #6a89a7; /* Lighter border */
+    border-radius: 6px;
+    background-color: #3c4c5e;
+    color: #f0f0f0;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.3s ease;
 }
 
+/* Input focus effect */
+input:focus {
+    border-color: #88BDF2;
+    background-color: #44566c;
+}
+
+/* Button styles (login button without gradient) */
 button {
     width: 100%;
-    padding: 10px;
-    background-color: #007bff;
+    padding: 12px;
+    background-color: #007bff; /* Original button color */
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
+    font-weight: bold;
+    font-size: 15px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
+/* Button hover effect */
 button:hover {
     background-color: #0056b3;
+    transform: scale(1.05);
 }
 
+/* Error message style */
 .error-message {
-    color: red;
-    margin-bottom: 10px;
+    color: #ff6b6b;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+/* Content below the login section */
+.content-below {
+    margin-top: 20px;
+    color: #ecf0f1;
+    font-size: 14px;
+}
+
+/* Logout button with original color */
+.logout-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #ff4d4d; /* Original logout button color */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 15px;
+    margin-top: 12px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+/* Logout button hover effect */
+.logout-btn:hover {
+    background-color: #e04343;
+    transform: scale(1.05);
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 480px) {
+    .login-container {
+        width: 90%;
+        padding: 20px;
+    }
+
+    input, button, .logout-btn {
+        padding: 10px;
+    }
 }
